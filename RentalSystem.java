@@ -5,12 +5,16 @@ import java.io.FileWriter;
 import java.io.BufferedWriter;
 import java.io.PrintWriter;
 import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileNotFoundException;
 
 public class RentalSystem {
 	
 	private static RentalSystem instance;
 	
 	private RentalSystem() {
+		loadData();
 	}
 	
 	public static RentalSystem getInstance() {
@@ -34,6 +38,133 @@ public class RentalSystem {
     public void addCustomer(Customer customer) {
         customers.add(customer);
         saveCustomer(customer);
+    }
+    
+    private void loadData() {
+        loadVehicles();
+        loadCustomers();
+        loadRecords();
+    }
+    
+    private void loadVehicles() {
+        try (BufferedReader reader = new BufferedReader(new FileReader("vehicles.txt"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+
+                if (parts.length != 5) {
+                    continue;}
+
+                String type  = parts[0];
+                String plate = parts[1];
+                String make  = parts[2];
+                String model = parts[3];
+                int year;
+
+                try {
+                    year = Integer.parseInt(parts[4]);
+                } catch (NumberFormatException e) {
+                    continue;}
+
+                Vehicle vehicle = null;
+
+                if ("Car".equalsIgnoreCase(type)) {
+                    int seats = 4;
+                    vehicle = new Car(make, model, year, seats);
+                } else if ("Minibus".equalsIgnoreCase(type)) {
+                    boolean isAccessible = false;
+                    vehicle = new Minibus(make, model, year, isAccessible);
+                } else if ("PickupTruck".equalsIgnoreCase(type) || "Pickup Truck".equalsIgnoreCase(type)) {
+                    double cargoSize = 1000.0;
+                    boolean hasTrailer = false;
+                    vehicle = new PickupTruck(make, model, year, cargoSize, hasTrailer);
+                }
+
+                if (vehicle != null) {
+                    vehicle.setLicensePlate(plate);
+                    vehicles.add(vehicle);
+                }
+            }
+        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
+            System.out.println("Error loading vehicles: " + e.getMessage());
+        }
+    }
+    
+    private void loadCustomers() {
+        try (BufferedReader reader = new BufferedReader(new FileReader("customers.txt"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+
+                if (parts.length != 2) {
+                    continue;
+                }
+
+                int id;
+                try {
+                    id = Integer.parseInt(parts[0]);
+                } catch (NumberFormatException e) {
+                    continue;
+                }
+
+                String name = parts[1];
+
+                Customer customer = new Customer(id, name);
+                customers.add(customer);
+            }
+        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
+            System.out.println("Error loading customers: " + e.getMessage());
+        }
+    }
+    
+    private void loadRecords() {
+        try (BufferedReader reader = new BufferedReader(new FileReader("rental_records.txt"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+
+                if (parts.length != 5) {
+                    continue;
+                }
+
+                String recordType = parts[0];
+                String plate = parts[1];
+
+                int customerId;
+                try {
+                    customerId = Integer.parseInt(parts[2]);
+                } catch (NumberFormatException e) {
+                    continue;
+                }
+
+                LocalDate date;
+                try {
+                    date = LocalDate.parse(parts[3]);
+                } catch (Exception e) {
+                    continue;
+                }
+
+                double amount;
+                try {
+                    amount = Double.parseDouble(parts[4]);
+                } catch (NumberFormatException e) {
+                    continue;
+                }
+
+                Vehicle vehicle = findVehicleByPlate(plate);
+                Customer customer = findCustomerById(customerId);
+
+                if (vehicle != null && customer != null) {
+                    RentalRecord record = new RentalRecord(vehicle, customer, date, amount, recordType);
+                    rentalHistory.addRecord(record);
+                }
+            }
+        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
+            System.out.println("Error loading rental records: " + e.getMessage());
+        }
     }
 
     public void rentVehicle(Vehicle vehicle, Customer customer, LocalDate date, double amount) {
