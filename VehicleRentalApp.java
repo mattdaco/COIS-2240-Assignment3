@@ -4,7 +4,7 @@ import java.time.LocalDate;
 public class VehicleRentalApp {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        RentalSystem rentalSystem = new RentalSystem();
+        RentalSystem rentalSystem = RentalSystem.getInstance();
 
         while (true) {
         	System.out.println("\n1: Add Vehicle\n" + 
