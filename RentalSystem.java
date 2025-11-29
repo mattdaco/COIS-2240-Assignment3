@@ -1,6 +1,10 @@
 import java.util.List;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.io.FileWriter;
+import java.io.BufferedWriter;
+import java.io.PrintWriter;
+import java.io.IOException;
 
 public class RentalSystem {
 	
@@ -15,22 +19,29 @@ public class RentalSystem {
         }
         return instance;
     }
+	private static final String vehiclesFile  = "vehicles.txt";
+	private static final String customerFile = "customers.txt";
+    private static final String recordsFile   = "rental_records.txt";
     private List<Vehicle> vehicles = new ArrayList<>();
     private List<Customer> customers = new ArrayList<>();
     private RentalHistory rentalHistory = new RentalHistory();
 
     public void addVehicle(Vehicle vehicle) {
         vehicles.add(vehicle);
+        saveVehicle(vehicle);
     }
 
     public void addCustomer(Customer customer) {
         customers.add(customer);
+        saveCustomer(customer);
     }
 
     public void rentVehicle(Vehicle vehicle, Customer customer, LocalDate date, double amount) {
         if (vehicle.getStatus() == Vehicle.VehicleStatus.Available) {
             vehicle.setStatus(Vehicle.VehicleStatus.Rented);
-            rentalHistory.addRecord(new RentalRecord(vehicle, customer, date, amount, "RENT"));
+            RentalRecord record = new RentalRecord(vehicle, customer, date, amount, "RENT");
+            rentalHistory.addRecord(record);
+            saveRecord(record);
             System.out.println("Vehicle rented to " + customer.getCustomerName());
         }
         else {
@@ -41,8 +52,9 @@ public class RentalSystem {
     public void returnVehicle(Vehicle vehicle, Customer customer, LocalDate date, double extraFees) {
         if (vehicle.getStatus() == Vehicle.VehicleStatus.Rented) {
             vehicle.setStatus(Vehicle.VehicleStatus.Available);
-            rentalHistory.addRecord(new RentalRecord(vehicle, customer, date, extraFees, "RETURN"));
-            System.out.println("Vehicle returned by " + customer.getCustomerName());
+            RentalRecord record = new RentalRecord(vehicle, customer, date, extraFees, "RETURN");
+            rentalHistory.addRecord(record);
+            saveRecord(record);
         }
         else {
             System.out.println("Vehicle is not rented.");
@@ -132,5 +144,53 @@ public class RentalSystem {
             if (c.getCustomerId() == id)
                 return c;
         return null;
+    }
+    
+    public void saveVehicle(Vehicle vehicle) {
+        String line = vehicle.getClass().getSimpleName() + "," +
+                      vehicle.getLicensePlate() + "," +
+                      vehicle.getMake() + "," +
+                      vehicle.getModel() + "," +
+                      vehicle.getYear();
+
+        try (FileWriter fileWriter = new FileWriter("vehicles.txt", true);
+             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+             PrintWriter out = new PrintWriter(bufferedWriter)) {
+
+            out.println(line);
+        } catch (IOException e) {
+            System.out.println("Error saving vehicle: " + e.getMessage());
+        }
+    }
+    
+    public void saveCustomer(Customer customer) {
+        String line = customer.getCustomerId() + "," +
+                      customer.getCustomerName();
+
+        try (FileWriter fileWriter = new FileWriter("customers.txt", true);
+             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+             PrintWriter out = new PrintWriter(bufferedWriter)) {
+
+            out.println(line);
+        } catch (IOException e) {
+            System.out.println("Error saving customer: " + e.getMessage());
+        }
+    }
+    
+    public void saveRecord(RentalRecord record) {
+        String line = record.getRecordType() + "," +
+                      record.getVehicle().getLicensePlate() + "," +
+                      record.getCustomer().getCustomerId() + "," +
+                      record.getRecordDate().toString() + "," +
+                      record.getTotalAmount();
+
+        try (FileWriter fileWriter = new FileWriter("rental_records.txt", true);
+             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+             PrintWriter out = new PrintWriter(bufferedWriter)) {
+
+            out.println(line);
+        } catch (IOException e) {
+            System.out.println("Error saving rental record: " + e.getMessage());
+        }
     }
 }
