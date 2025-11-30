@@ -1,2 +1,3 @@
 Car,ABC123,Ford,Fast,2005
 Car,12345,Honda,Speed,2010
+Minibus,1234,Honda,Slow,2025
