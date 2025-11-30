@@ -23,21 +23,33 @@ public class RentalSystem {
         }
         return instance;
     }
-	private static final String vehiclesFile  = "vehicles.txt";
-	private static final String customerFile = "customers.txt";
-    private static final String recordsFile   = "rental_records.txt";
+	
     private List<Vehicle> vehicles = new ArrayList<>();
     private List<Customer> customers = new ArrayList<>();
     private RentalHistory rentalHistory = new RentalHistory();
 
-    public void addVehicle(Vehicle vehicle) {
+    public boolean addVehicle(Vehicle vehicle) {
+        Vehicle existing = findVehicleByPlate(vehicle.getLicensePlate());
+        if (existing != null) {
+            System.out.println("A vehicle with license plate " + vehicle.getLicensePlate() + " already exists. Vehicle not added.");
+            return false;
+        }
+
         vehicles.add(vehicle);
         saveVehicle(vehicle);
+        return true;
     }
 
-    public void addCustomer(Customer customer) {
+    public boolean addCustomer(Customer customer) {
+        Customer existing = findCustomerById(customer.getCustomerId());
+        if (existing != null) {
+            System.out.println("A customer with ID " + customer.getCustomerId() + " already exists. Customer not added.");
+            return false;
+        }
+
         customers.add(customer);
         saveCustomer(customer);
+        return true;
     }
     
     private void loadData() {
@@ -201,8 +213,7 @@ public class RentalSystem {
         }
         
         // Header with proper column widths
-        System.out.printf("|%-16s | %-12s | %-12s | %-12s | %-6s | %-18s |%n", 
-            " Type", "Plate", "Make", "Model", "Year", "Status");
+        System.out.printf("|%-16s | %-12s | %-12s | %-12s | %-6s | %-18s |%n"," Type", "Plate", "Make", "Model", "Year", "Status");
         System.out.println("|--------------------------------------------------------------------------------------------|");
     	  
         boolean found = false;
@@ -244,8 +255,7 @@ public class RentalSystem {
             System.out.println("  No rental history found.");
         } else {
             // Header with proper column widths
-            System.out.printf("|%-10s | %-12s | %-20s | %-12s | %-12s |%n", 
-                " Type", "Plate", "Customer", "Date", "Amount");
+            System.out.printf("|%-10s | %-12s | %-20s | %-12s | %-12s |%n"," Type", "Plate", "Customer", "Date", "Amount");
             System.out.println("|-------------------------------------------------------------------------------|");
             
             for (RentalRecord record : rentalHistory.getRentalHistory()) {                
